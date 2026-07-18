@@ -1,38 +1,60 @@
-// lib/dataLoaders.ts
 import Papa from "papaparse";
-const BASE_PATH = 'https://crazystylus.github.io/faang-sched-gen';
+import type { DataRow } from "./lookupUtils";
 
-export async function loadForexData(): Promise<any[]> {
-  const res = await fetch(`${BASE_PATH}/SBI_REFERENCE_RATES_USD.csv`);
-  const text = await res.text();
-  const parsed = Papa.parse(text, { header: true });
+const BASE_PATH = "https://crazystylus.github.io/faang-sched-gen";
+const DATA_PATH = process.env.NODE_ENV === "development" ? "" : BASE_PATH;
+
+async function fetchCsv(url: string, label: string): Promise<DataRow[]> {
+  const response = await fetch(url);
+  if (!response.ok)
+    throw new Error(`Unable to load ${label} (${response.status})`);
+  const parsed = Papa.parse<DataRow>(await response.text(), {
+    header: true,
+    skipEmptyLines: true,
+  });
+  if (parsed.errors.length)
+    throw new Error(`Unable to parse ${label}: ${parsed.errors[0].message}`);
+  if (!parsed.data.length) throw new Error(`${label} is empty`);
   return parsed.data;
+}
+
+export function loadForexData(): Promise<DataRow[]> {
+  return fetchCsv(
+    `${DATA_PATH}/SBI_REFERENCE_RATES_USD.csv`,
+    "SBI reference rates",
+  );
 }
 
 export async function loadStockData(
   equity: string,
-  file?: File,
-): Promise<any[]> {
+  file?: File | FileList | string,
+): Promise<DataRow[]> {
   if (file) {
-    const text = await file.text();
-    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-    return parsed.data.map((row: any) => ({
-      date: normalizeDate(row.Date),
-      ...row,
-    }));
-  } else {
-    const res = await fetch(`${BASE_PATH}/stockData/${equity}.csv`);
-    const text = await res.text();
-    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-    return parsed.data.map((row: any) => ({
-      date: normalizeDate(row.Date),
-      ...row,
-    }));
+    const selectedFile = isFileList(file) ? file.item(0) : file;
+    const text =
+      typeof selectedFile === "string"
+        ? selectedFile
+        : selectedFile
+          ? await selectedFile.text()
+          : "";
+    if (!text.trim()) throw new Error("The custom stock CSV is empty");
+    const parsed = Papa.parse<DataRow>(text, {
+      header: true,
+      skipEmptyLines: true,
+    });
+    if (parsed.errors.length)
+      throw new Error(
+        `Unable to parse custom stock CSV: ${parsed.errors[0].message}`,
+      );
+    if (!parsed.data.length) throw new Error("The custom stock CSV is empty");
+    return parsed.data;
   }
+  return fetchCsv(
+    `${DATA_PATH}/stockData/${encodeURIComponent(equity)}.csv`,
+    `${equity} stock data`,
+  );
 }
 
-function normalizeDate(dateStr: string): string {
-  // Convert MM/DD/YYYY to YYYY-MM-DD
-  const [month, day, year] = dateStr.split("/");
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+function isFileList(value: File | FileList | string): value is FileList {
+  return typeof FileList !== "undefined" && value instanceof FileList;
 }

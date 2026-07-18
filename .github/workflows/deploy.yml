@@ -28,20 +28,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
+          bun-version: "1.2.21"
 
       - name: Install dependencies
-        run: npm install
+        run: bun install --frozen-lockfile
+
+      - name: Run tests
+        run: bun test
 
       - name: Setup Pages
         id: setup_pages
         uses: actions/configure-pages@v5
 
       - name: Build with Next.js
-        run: npm run build
+        run: bun run build
         env:
           PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
 

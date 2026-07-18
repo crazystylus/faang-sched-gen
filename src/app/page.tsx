@@ -1,9 +1,10 @@
 // pages/form.tsx
 "use client";
 
-import { useForm, FormProvider } from "react-hook-form";
-import { InvestmentForm } from "./InvestmentForm";
+import { Info } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { FormProvider, useForm } from "react-hook-form";
+import { CommonNavMenu } from "@/components/custom/CommonNavBar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,29 +14,65 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CommonNavMenu } from "@/components/custom/CommonNavBar";
+import type { ScheduleFAInput } from "@/lib/computeFA";
+import { InvestmentForm } from "./InvestmentForm";
 
-const assessmentYears = [
-  "2021-2022",
-  "2022-2023",
-  "2023-2024",
-  "2024-2025",
-  "2025-2026",
-];
+const currentYear = new Date().getFullYear();
+const startYear = 2021;
+const endYear = currentYear + 1; // include next FY
+const assessmentYears: string[] = [];
+for (let y = endYear; y >= startYear; y--) {
+  assessmentYears.push(`${y}-${y + 1}`);
+}
+
+function FieldHelp({ text }: { text: string }) {
+  return (
+    <button
+      type="button"
+      className="inline-flex text-muted-foreground"
+      title={text}
+      aria-label={text}
+    >
+      <Info className="size-4" aria-hidden="true" />
+    </button>
+  );
+}
+
+const getYearLabel = (ay: string) => {
+  const startAY = parseInt(ay.split("-")[0], 10);
+  const fyStart = startAY - 1;
+  const fyEnd = startAY % 100;
+  const cy = fyStart;
+  return `FY ${fyStart}-${fyEnd} (AY ${ay}) [CY ${cy}]`;
+};
 
 export default function FormPage() {
   const router = useRouter();
-  const methods = useForm({
+  const methods = useForm<ScheduleFAInput>({
     defaultValues: {
       assessmentYear: "",
       investments: [],
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("Submitted Data:", data);
+  const onSubmit = async (data: ScheduleFAInput) => {
+    const serializableInput: ScheduleFAInput = {
+      ...data,
+      investments: await Promise.all(
+        data.investments.map(async (investment) => {
+          const file =
+            typeof FileList !== "undefined" &&
+            investment.customCSV instanceof FileList
+              ? investment.customCSV.item(0)
+              : investment.customCSV;
+          return file instanceof File
+            ? { ...investment, customCSV: await file.text() }
+            : investment;
+        }),
+      ),
+    };
     // Store in localStorage or pass via router for /result page
-    localStorage.setItem("fa-input", JSON.stringify(data));
+    localStorage.setItem("fa-input", JSON.stringify(serializableInput));
     router.push("/result");
   };
 
@@ -50,16 +87,25 @@ export default function FormPage() {
           className="max-w-4xl mx-auto p-6 flex flex-col gap-4"
         >
           <h1 className="text-2xl font-bold">Schedule FA Generator</h1>
+          <p className="text-sm text-muted-foreground">
+            Built-in stock-price and SBI TT Buy data start in 2020. Initial
+            values for earlier acquisitions may be left blank for manual review.
+          </p>
           <div className="flex flex-row gap-5 items-center">
-            <Label>Assessment Year:</Label>
-            <Select onValueChange={(value) => setValue("assessmentYear", value)}>
-              <SelectTrigger>
+            <Label className="flex items-center gap-1">
+              Select Financial Year
+              <FieldHelp text="Schedule FA uses the calendar year shown in brackets. For example, AY 2025-26 uses calendar year 2024." />
+            </Label>
+            <Select
+              onValueChange={(value) => setValue("assessmentYear", value)}
+            >
+              <SelectTrigger className="w-[380px]">
                 <SelectValue placeholder="Select year" />
               </SelectTrigger>
               <SelectContent>
                 {assessmentYears.map((year) => (
                   <SelectItem key={year} value={year}>
-                    {year}
+                    {getYearLabel(year)}
                   </SelectItem>
                 ))}
               </SelectContent>

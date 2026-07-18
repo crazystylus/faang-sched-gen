@@ -48,6 +48,16 @@ const equityMetadata: Record<
   },
 };
 
+export function sortInvestmentResultsByDate(
+  data: InvestmentResult[],
+): InvestmentResult[] {
+  return [...data].sort(
+    (a, b) =>
+      new Date(b.dateOfInvestment).getTime() -
+      new Date(a.dateOfInvestment).getTime(),
+  );
+}
+
 export function generateScheduleFACSV(data: InvestmentResult[]): string {
   const headers = [
     "Country/Region name",
@@ -64,7 +74,7 @@ export function generateScheduleFACSV(data: InvestmentResult[]): string {
     "Total gross proceeds from sale or redemption of investment during the period",
   ];
 
-  const rows = data.map((item, index) => {
+  const rows = sortInvestmentResultsByDate(data).map((item) => {
     const meta = equityMetadata[item.equity] ?? {
       entityName: `${item.equity} (Custom)`,
       address: "Unknown",
