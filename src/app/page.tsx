@@ -86,9 +86,11 @@ export default function FormPage() {
           onSubmit={methods.handleSubmit(onSubmit)}
           className="max-w-4xl mx-auto p-6 flex flex-col gap-4"
         >
-          <h1 className="text-2xl font-bold">Schedule FA Generator</h1>
+          <h1 className="text-2xl font-bold">FA Ledger</h1>
           <p className="text-sm text-muted-foreground">
-            Built-in stock-price and SBI TT Buy data start in 2020. Initial
+            Track foreign assets &amp; generate ITR-ready Schedule FA — calculates
+            initial, peak, and closing values in INR using SBI TT Buy rates.
+            Built-in stock-price and SBI TT Buy data start in 2020; initial
             values for earlier acquisitions may be left blank for manual review.
           </p>
           <div className="flex flex-row gap-5 items-center">

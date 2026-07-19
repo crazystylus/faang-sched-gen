@@ -1,6 +1,10 @@
-# Schedule FA Generator
+# FA Ledger
 
-A small client-side tool for preparing the values needed for Schedule FA, Table A3 (foreign equity and debt interest), for Indian income-tax returns.
+**Track foreign assets and generate ITR-ready Schedule FA schedules.**
+
+🌐 **Live app: [crazystylus.github.io/faang-sched-gen](https://crazystylus.github.io/faang-sched-gen/)**
+
+A client-side tool for preparing the values needed for Schedule FA, Table A3 (foreign equity and debt interest), for Indian income-tax returns.
 
 It supports the included US equities (AAPL, AMZN, MSFT, GOOGL, META, and NFLX) and custom equities through a price-history CSV upload.
 

@@ -13,6 +13,13 @@ export const CommonNavMenu = () => {
       className="border-b mb-4 align-middle min-w-svw"
       viewport={false}
     >
+      <NavigationMenuItem style={{ listStyle: "none", marginRight: "auto" }}>
+        <NavigationMenuLink asChild>
+          <Link href="/">
+            <span className="font-bold text-lg tracking-tight">FA Ledger</span>
+          </Link>
+        </NavigationMenuLink>
+      </NavigationMenuItem>
       <NavigationMenuItem style={{ listStyle: "none" }}>
         <NavigationMenuLink asChild>
           <Link

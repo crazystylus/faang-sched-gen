@@ -49,6 +49,7 @@ describe("Schedule FA computation", () => {
       equity: "AAPL",
       units: 2,
       dateOfInvestment: "2024-01-06",
+      initialValueUSD: 200,
       initialValueINR: 16600,
       peakValueINR: 22270,
       dateOfPeak: "2024-12-30",
@@ -67,6 +68,7 @@ describe("Schedule FA computation", () => {
       },
       dependencies,
     );
+    expect(result.initialValueUSD).toBe(90);
     expect(result.initialValueINR).toBe(7200);
     expect(result.peakValueINR).toBe(11135);
   });
@@ -82,6 +84,7 @@ describe("Schedule FA computation", () => {
       dependencies,
     );
     expect(result.initialValueINR).toBeUndefined();
+    expect(result.initialValueUSD).toBeUndefined();
     expect(result.peakValueINR).toBe(11135);
   });
 
@@ -100,6 +103,7 @@ describe("Schedule FA computation", () => {
       },
       dependencies,
     );
+    expect(result.initialValueUSD).toBe(100);
     expect(result.initialValueINR).toBe(8300);
   });
 

@@ -4,6 +4,7 @@
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { CommonNavMenu } from "@/components/custom/CommonNavBar";
+import { DownloadBeancountButton } from "@/components/custom/DownloadBeancountButton";
 import { DownloadCSVButton } from "@/components/custom/DownloadCSVButton";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import {
@@ -121,8 +122,9 @@ export default function ResultPage() {
               ))}
             </TableBody>
           </Table>
-          <CardFooter>
+          <CardFooter className="justify-between">
             <DownloadCSVButton data={results} />
+            <DownloadBeancountButton data={results} />
           </CardFooter>
         </CardContent>
       </Card>

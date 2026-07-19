@@ -20,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TaxSheetImporter } from "@/components/custom/TaxSheetImporter";
+import type { InvestmentInput } from "@/lib/computeFA";
 
 const equityOptions = [
   "AAPL",
@@ -54,8 +56,13 @@ export const InvestmentForm = () => {
 
   const watchInvestments = watch("investments");
 
+  const handleImport = (investments: InvestmentInput[]) => {
+    append(investments);
+  };
+
   return (
     <div className="space-y-6">
+      <TaxSheetImporter onImport={handleImport} />
       {fields.map((field, index) => {
         const equity = watchInvestments?.[index]?.equity || "";
         return (

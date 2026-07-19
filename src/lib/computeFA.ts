@@ -85,7 +85,7 @@ export async function computeScheduleFA(
     if (!closingDate)
       throw new Error(`${investment.equity}: invalid closing date`);
 
-    const initialValueINR = canCalculateInitialValue(
+    const initialValue = canCalculateInitialValue(
       investment,
       stockData,
       forexData,
@@ -105,7 +105,8 @@ export async function computeScheduleFA(
       equity: investment.equity,
       units: investment.units,
       dateOfInvestment: formatCalendarDate(investmentDate),
-      initialValueINR,
+      initialValueUSD: initialValue?.usd,
+      initialValueINR: initialValue?.inr,
       peakValueINR,
       dateOfPeak: formatCalendarDate(peakDate),
       closingValueINR,
@@ -120,7 +121,7 @@ function calculateInitialValue(
   stockData: DataRow[],
   forexData: DataRow[],
   date: Date,
-): number {
+): { usd: number; inr: number } {
   const unitPrice = !hasFairMarketValue(investment)
     ? getUSDValueOnDate(stockData, date, "Close/Last")
     : investment.fairMarketValueUSD;
@@ -128,7 +129,11 @@ function calculateInitialValue(
     throw new Error(
       `${investment.equity}: fair market value must be zero or greater`,
     );
-  return unitPrice * investment.units * getTTBuyRateOnDate(forexData, date);
+  const usd = unitPrice * investment.units;
+  return {
+    usd,
+    inr: usd * getTTBuyRateOnDate(forexData, date),
+  };
 }
 
 /**

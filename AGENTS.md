@@ -56,13 +56,16 @@ faang-sched-gen/
 │   │   ├── custom/
 │   │   │   ├── CommonNavBar.tsx      # Navigation bar (Github link, Home link)
 │   │   │   ├── DownloadCSVButton.tsx # CSV download trigger
+│   │   │   ├── TaxSheetImporter.tsx  # Multi-slot UI for importing employer tax sheets
 │   │   │   └── theme-provider.tsx    # Next-themes wrapper context
 │   │   └── ui/                       # Reusable shadcn/radix primitives (Button, Calendar, Table, etc.)
 │   └── lib/
+│       ├── amazonTaxSheet.ts   # Amazon RSU tax-sheet parser + RsuTaxSheetAdapter contract
 │       ├── computeFA.ts        # Primary calculation engine for Schedule FA values
 │       ├── dataLoaders.ts      # Fetchers for SBI rates and stock price CSVs
 │       ├── lookupUtils.ts      # Lookup logic for nearest date matches
 │       ├── scheduleFAExport.ts # CSV formatter matching Schedule FA A3 columns
+│       ├── taxSheetRegistry.ts # Central registry of all RsuTaxSheetAdapter instances
 │       └── utils.ts            # Tailwind class merging helper (cn)
 ├── biome.json                  # Biome linting, formatting, and import organization config
 ├── components.json             # Shadcn UI structure mapping config
@@ -141,7 +144,67 @@ Formatted to align with **Schedule FA (Table A3 - Details of Foreign Equity and 
 
 ---
 
-## 6. Scripts & Workflow Commands
+## 6. Tax-Sheet Adapter System
+
+The application supports importing employer-provided RSU/equity tax sheets to auto-populate investment rows. The system is built around a small, stable interface so new employer adapters can be added without touching any UI code.
+
+### Adapter Contract (`src/lib/amazonTaxSheet.ts`)
+
+Every adapter must implement the `RsuTaxSheetAdapter` interface:
+
+```typescript
+export interface RsuTaxSheetAdapter {
+  id: string;          // Unique machine-readable key (e.g. "amazon-rsu-tax-sheet")
+  label: string;       // Human-readable name shown in the UI dropdown
+  accept: string;      // HTML file-input accept string (e.g. ".xlsx,.xls,.csv")
+  importFile: (file: File) => Promise<InvestmentInput[]>;
+}
+```
+
+`importFile` receives the raw `File` object and must resolve with an array of `InvestmentInput` records (or reject with a descriptive `Error`).
+
+### Registry (`src/lib/taxSheetRegistry.ts`)
+
+`TAX_SHEET_ADAPTERS` is the single source of truth — an ordered array of all registered adapter objects:
+
+```typescript
+export const TAX_SHEET_ADAPTERS: RsuTaxSheetAdapter[] = [
+  amazonRsuTaxSheetAdapter,
+  // add new adapters here
+];
+```
+
+The UI reads this array at render time, so **adding an entry here is the only change needed** to surface a new employer in the dropdown.
+
+A `getAdapterById(id)` helper is also exported for O(1) lookups by adapter id.
+
+### UI (`src/components/custom/TaxSheetImporter.tsx`)
+
+`<TaxSheetImporter onImport={fn} />` renders a card with one or more "sheet slots". Each slot lets the user:
+1. Pick an adapter from the dropdown (populated from `TAX_SHEET_ADAPTERS`).
+2. Upload the corresponding file (filtered by `adapter.accept`).
+3. See per-slot status: loading / success / error.
+4. Add additional slots (e.g. multiple Amazon grant years) or remove unwanted ones.
+
+On successful parse, `onImport(investments)` is called and the parent form appends the rows.
+
+### Currently registered adapters
+
+| id | label | Accepted formats | Source file |
+|----|-------|-----------------|-------------|
+| `amazon-rsu-tax-sheet` | Import Amazon RSU tax sheet | `.xlsx`, `.xls`, `.csv` | `src/lib/amazonTaxSheet.ts` |
+
+### Adding a new adapter (checklist)
+
+1. Create `src/lib/<employer>TaxSheet.ts` and implement `RsuTaxSheetAdapter`.
+2. Export the adapter object from that file.
+3. Import it in `src/lib/taxSheetRegistry.ts` and append it to `TAX_SHEET_ADAPTERS`.
+4. Add a row to the table above in this document.
+5. Run `bun run build` to confirm no type errors.
+
+---
+
+## 7. Scripts & Workflow Commands
 
 All scripts are executed via Bun:
 

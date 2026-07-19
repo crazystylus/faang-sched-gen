@@ -5,6 +5,7 @@ export interface InvestmentResult {
   equity: string;
   units: number;
   dateOfInvestment: string; // ISO string
+  initialValueUSD?: number;
   initialValueINR?: number;
   peakValueINR: number;
   closingValueINR: number;
