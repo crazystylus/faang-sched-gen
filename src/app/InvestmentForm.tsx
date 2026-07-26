@@ -1,9 +1,10 @@
 // components/InvestmentForm.tsx
 "use client";
 
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { CalendarIcon, Info } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { TaxSheetImporter } from "@/components/custom/TaxSheetImporter";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TaxSheetImporter } from "@/components/custom/TaxSheetImporter";
 import type { InvestmentInput } from "@/lib/computeFA";
 
 const equityOptions = [
@@ -137,7 +137,9 @@ export const InvestmentForm = () => {
                     <CalendarIcon />
                     {getValues(`investments.${index}.dateOfInvestment`) ? (
                       format(
-                        getValues(`investments.${index}.dateOfInvestment`),
+                        parseISO(
+                          getValues(`investments.${index}.dateOfInvestment`),
+                        ),
                         "PPP",
                       )
                     ) : (
@@ -153,11 +155,18 @@ export const InvestmentForm = () => {
                     toYear={new Date().getFullYear()}
                     reverseYears
                     mode="single"
-                    selected={getValues(
-                      `investments.${index}.dateOfInvestment`,
-                    )}
+                    selected={
+                      getValues(`investments.${index}.dateOfInvestment`)
+                        ? parseISO(
+                            getValues(`investments.${index}.dateOfInvestment`),
+                          )
+                        : undefined
+                    }
                     onSelect={(date) =>
-                      setValue(`investments.${index}.dateOfInvestment`, date)
+                      setValue(
+                        `investments.${index}.dateOfInvestment`,
+                        date ? format(date, "yyyy-MM-dd") : "",
+                      )
                     }
                   />
                 </PopoverContent>
